@@ -59,3 +59,14 @@ Developers Discord:
 
 Repository contributions follow standard GitHub flow. Issues and discussions are enabled for async
 input.
+
+## License
+
+**[CC-BY 4.0](../LICENSE)**
+
+This hub is a public good. You are free to copy, remix, and share this work — for instance on
+Discord, Notion, or in your own docs. Our only "bond" is attribution: always (deep)link back to the
+source. It ensures our governance stays transparent and the thread remains connected.
+
+> 🔗 Source:
+> [scf-public-goods-maintenance.github.io](https://scf-public-goods-maintenance.github.io/)
