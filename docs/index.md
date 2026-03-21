@@ -62,7 +62,7 @@ input.
 
 ## License
 
-**[CC-BY 4.0](../LICENSE)**
+**[CC-BY 4.0](https://github.com/SCF-Public-Goods-Maintenance/scf-public-goods-maintenance.github.io/blob/main/LICENSE){:target="⚡"}**
 
 This hub is a public good. You are free to copy, remix, and share this work — for instance on
 Discord, Notion, or in your own docs. Our only "bond" is attribution: always (deep)link back to the
