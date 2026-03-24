@@ -1,0 +1,80 @@
+name: Validate PG Award Intake Form
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+jobs:
+  validate:
+    if: contains(github.event.issue.labels.*.name, 'pg-award-intake')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Remove labels (clear previous state)
+        id: remove-label
+        uses: issue-ops/labeler@v4
+        with:
+          action: remove
+          issue_number: ${{ github.event.issue.number }}
+          labels: |
+            pg-intake:in-review
+            pg-intake:accepted
+            pg-intake:rejected
+            issueops:validation-error
+
+      # - name: Checkout repo for validators?
+      #   id: checkout
+      #   uses: actions/checkout@v6
+
+      - name: Parse intake form
+        id: parse
+        uses: issue-ops/parser@v5
+        with:
+          body: ${{ github.event.issue.body }}
+          issue-form-template: pg-award-intake-form.yml
+
+      - name: Validate intake form
+        id: validate
+        uses: issue-ops/validator@v4
+        with:
+          issue-form-template: pg-award-intake-form.yml
+          parsed-issue-body: ${{ steps.parse.outputs.json }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Success path → in-review
+        if: ${{ steps.validate.outputs.result == 'success' }}
+        id: add-in-review-label
+        uses: issue-ops/labeler@v4
+        with:
+          action: add
+          issue_number: ${{ github.event.issue.number }}
+          labels: |
+            pg-intake:in-review
+
+      - name: Failure path → validation-error
+        if: ${{ steps.validate.outputs.result != 'success' }}
+        id: add-validation-error-label
+        uses: issue-ops/labeler@v4
+        with:
+          action: add
+          issue_number: ${{ github.event.issue.number }}
+          labels: |
+            issueops:validation-error
+
+      - name: Post validation errors as comment
+        if: ${{ steps.validate.outputs.result != 'success' }}
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          reactions: eyes
+          body: |
+            ## ⚠️ Validation Errors ⚠️
+
+            ${{ steps.validate.outputs.errors }}
+
+            Please edit the issue to fix the problems above and the validation will re-run automatically.

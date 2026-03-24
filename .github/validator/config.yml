@@ -1,0 +1,30 @@
+validators:
+  # Word-count validators (one script per unique limit)
+  - field: one-sentence
+    script: validate-32-words.js
+  - field: project-description
+    script: validate-128-words.js
+  - field: traction
+    script: validate-64-words.js
+  - field: revenue-details
+    script: validate-64-words.js
+
+  # Character-count validators (one script per unique limit)
+  - field: project-name
+    script: validate-128-chars.js
+  - field: license
+    script: validate-64-chars.js
+
+  # Date validation (2000-2099 year presence + length)
+  - field: release-date
+    script: validate-date.js
+
+  # Loose URL validation (https:// prefix + general structure)
+  - field: website
+    script: validate-url-loose.js
+  - field: git-repo
+    script: validate-url-loose.js
+
+  # Conditional revenue-details
+  - field: revenue-details
+    script: validate-revenue-conditional.js
