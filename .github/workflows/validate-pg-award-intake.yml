@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   issues: write
-  id-token: write
 
 jobs:
   validate:
@@ -27,9 +26,9 @@ jobs:
             pg-intake:rejected
             issueops:validation-error
 
-      # - name: Checkout repo for validators?
-      #   id: checkout
-      #   uses: actions/checkout@v6
+      - name: Checkout repo
+        id: checkout
+        uses: actions/checkout@v6
 
       - name: Parse intake form
         id: parse
@@ -44,7 +43,7 @@ jobs:
         with:
           issue-form-template: pg-award-intake-form.yml
           parsed-issue-body: ${{ steps.parse.outputs.json }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          add-comment: true
 
       - name: Success path → in-review
         if: ${{ steps.validate.outputs.result == 'success' }}
@@ -52,6 +51,7 @@ jobs:
         uses: issue-ops/labeler@v4
         with:
           action: add
+          create: true
           issue_number: ${{ github.event.issue.number }}
           labels: |
             pg-intake:in-review
@@ -62,19 +62,7 @@ jobs:
         uses: issue-ops/labeler@v4
         with:
           action: add
+          create: true
           issue_number: ${{ github.event.issue.number }}
           labels: |
             issueops:validation-error
-
-      - name: Post validation errors as comment
-        if: ${{ steps.validate.outputs.result != 'success' }}
-        uses: peter-evans/create-or-update-comment@v5
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          reactions: eyes
-          body: |
-            ## ⚠️ Validation Errors ⚠️
-
-            ${{ steps.validate.outputs.errors }}
-
-            Please edit the issue to fix the problems above and the validation will re-run automatically.
