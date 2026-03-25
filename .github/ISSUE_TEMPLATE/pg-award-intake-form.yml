@@ -13,6 +13,8 @@ body:
         **Important note on eligibility**:
         If this project was voted on in a previous Public Goods Award round, you are eligible to create a proposal directly on [Tansu](https://testnet.tansu.dev/project/?name=stellarpg). You do **not** need to fill out this form.
 
+        _UX limitation:_ any links in this form will open in your current browser tab by default. You risk losing progress. It's always a good idea to draft your answers in a separate file, or copy them there as a backup.
+
   - type: input
     id: project-name
     attributes:
@@ -22,7 +24,7 @@ body:
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: one-sentence
     attributes:
       label: Describe your project in one sentence
@@ -48,11 +50,10 @@ body:
       label: Your history with the PG Award
       description: Is this your first time submitting to the SCF Public Goods Award?
       options:
-        - Yes, it's my first time submitting a proposal for the Public Goods Award
-        - Yes, it's my first time submitting to this Award, but I've received SDF Infrastructure
-          Grants before.
-        - No, I've submitted before to the Public Goods Award (eligible to create a proposal directly
-          on Tansu — you do not need to fill out this form)
+        - "First time submitting a proposal for the Public Goods Award"
+        - "First time submitting to this Award, but I've received SDF Infrastructure Grants before."
+        - "Submitted before to the Public Goods Award (eligible to create a proposal directly on
+          Tansu — you do not need to fill out this form)"
     validations:
       required: true
 
@@ -65,6 +66,7 @@ body:
         Categories](https://scf-public-goods-maintenance.github.io/public-goods-award/#public-good-categories)
         to learn more.
       options:
+        - Other
         - SDKs
         - Data Support
         - Wallet Support
@@ -74,7 +76,6 @@ body:
         - Governance Tools
         - Security & Auditing Tools
         - Compliance & Identity Tooling
-        - Other
     validations:
       required: true
 
@@ -163,16 +164,18 @@ body:
     attributes:
       label: Describe your team members and your team's experience with the Stellar ecosystem
       description:
-        For FOSS projects, your "team" includes maintainers and recurring contributors (not drive-by
-        contributors). Include for each member their GitHub profile, Discord handle, and LinkedIn
-        profile if available.
+        Include for each member their GitHub profile, Discord handle, and LinkedIn profile if
+        available. For FOSS projects, your "team" includes maintainers and recurring contributors
+        (not drive-by contributors).
       placeholder:
-        List each member, and mention previous SCF participation, ecosystem contributions, projects
-        built on Stellar.
+        Write a paragraph about each member, and mention previous SCF participation, ecosystem
+        contributions, projects built on Stellar, and overall FOSS maintainer track record (in any
+        software ecosystem).
     validations:
       required: true
 
   - type: markdown
     attributes:
       value: |
-        Thank you! Once submitted, the SCF Pilots will review your intake form. If eligible, you will be invited to create a formal proposal on Tansu.
+        Thank you for your interest! After this form is validated, the SCF Pilots will review your intake form.
+        If deemed eligible, you will be invited to create a formal proposal on Tansu.
