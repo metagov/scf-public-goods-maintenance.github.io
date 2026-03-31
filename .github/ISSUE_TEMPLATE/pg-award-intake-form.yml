@@ -49,9 +49,10 @@ body:
     attributes:
       label: Your history with the PG Award
       description: Is this your first time submitting to the SCF Public Goods Award?
+      multiple: false
       options:
         - "First time submitting a proposal for the Public Goods Award"
-        - "First time submitting to this Award, but I've received SDF Infrastructure Grants before."
+        - "First time submitting to this Award but I've received SDF Infrastructure Grants before."
         - "Submitted before to the Public Goods Award (eligible to create a proposal directly on
           Tansu — you do not need to fill out this form)"
     validations:
@@ -65,6 +66,7 @@ body:
         Take a look at the [Public Good
         Categories](https://scf-public-goods-maintenance.github.io/public-goods-award/#public-good-categories)
         to learn more.
+      multiple: false
       options:
         - Other
         - SDKs
@@ -120,6 +122,7 @@ body:
     id: revenue-model
     attributes:
       label: Does your project have a revenue model?
+      multiple: false
       options:
         - "No"
         - "Yes"
