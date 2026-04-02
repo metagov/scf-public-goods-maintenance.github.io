@@ -1,0 +1,110 @@
+name: SCF Public Goods Award - Proposal Form
+description: Submit your project for consideration for the SCF Public Goods Award
+title: "PG Award Proposal: "
+labels: ["pg-award-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # SCF Public Goods Award: Submission Form
+
+        Thank you for your interest in the SCF Public Goods Award.
+
+        **Important note on eligibility**:
+        If this project was voted on in a previous Public Goods Award round, you are eligible to create a proposal. Otherwise you must have filled an intake form and have been approved to make a proposal.
+
+        _UX limitation:_ any links in this form will open in your current browser tab by default. You risk losing progress. It's always a good idea to draft your answers in a separate file, or copy them there as a backup.
+
+  - type: input
+    id: project-name
+    attributes:
+      label: Project Name
+      description: Max 128 characters
+      placeholder: e.g. StellarExpert Explorer
+    validations:
+      required: true
+
+  - type: input
+    id: one-sentence
+    attributes:
+      label: Describe your project in one sentence
+      description: Max 32 words
+      placeholder:
+        e.g A Soroban-focused block explorer optimized for smart contract visibility and developer
+        tooling.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pg-history
+    attributes:
+      label: Your history with the PG Award
+      description: Is this your first time submitting to the SCF Public Goods Award?
+      multiple: false
+      options:
+        - "First time submitting a proposal for the Public Goods Award"
+        - "First time submitting to this Award but I've received SDF Infrastructure Grants before."
+        - "Submitted before to the Public Goods Award"
+    validations:
+      required: true
+
+  - type: input
+    id: pg-award-intake
+    attributes:
+      label: PG intake form
+      description: Link to the intake form of the project
+      placeholder: https://scf-public-goods-maintenance.github.io
+    validations:
+      required: true
+
+  - type: textarea
+    id: pg-retroactive-impact
+    attributes:
+      label: What's your project's retroactive impact over the last three months?
+      description:
+        For new and renewal proposals. Be specific, and include usage stats, ecosystem integrations, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: pg-retroactive-deliverable
+    attributes:
+      label: Please list your deliverables of the last three months including proof of completion.
+      description:
+        If this is your first time applying for the SCF Public Goods Award and you haven't received an Infrastructure Grant before, enter "N/A"
+    validations:
+      required: true
+
+  - type: textarea
+    id: pg-proposal-impact
+    attributes:
+      label: What's are your project's goals for impact for the upcoming three months?
+      description:
+        How will this benefit the Stellar ecosystem? Be specific, and include evidence of continued usage, relevance, and ecosystem demand, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: pg-proposal-deliverable
+    attributes:
+      label: Please list your deliverables you're aiming to create in the next three months and explain their ecosystem value.
+      description:
+        Make your deliverables SMART (Specific, Measurable, Achievable, Relevant, and Time-bound) with reasonable and justifiable budget allocations that will bring significant ecosystem value.
+    validations:
+      required: true
+
+  - type: input
+    id: budget
+    attributes:
+      label: Budget Requested
+      description: Max. $50,000 in XLM. Budget needs to be reasonable based on retroactive impact and planned deliverables for the next three months.
+      placeholder:
+        $[...] in XLM
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your interest! After this form is validated, the SCF Pilots will review your submission form.
+        If deemed eligible, your proposal will be created on Tansu.
