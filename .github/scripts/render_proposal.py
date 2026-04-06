@@ -115,16 +115,23 @@ def main():
     """
     )
 
+    def md_url(url: str) -> str:
+        """Wrap a URL in angle brackets to satisfy MD034/no-bare-urls."""
+        url = url.strip()
+        if url and not url.startswith("<"):
+            return f"<{url}>"
+        return url
+
     body_parts = [
         f"# {project_name}\n",
         f"_{one_sentence}_\n",
         "| | |",
         "| --- | --- |",
         f"| **Category** | {category} |",
-        f"| **Website** | {website} |",
-        f"| **Repository** | {git_repo} |",
+        f"| **Website** | {md_url(website)} |",
+        f"| **Repository** | {md_url(git_repo)} |",
         f"| **First Released** | {release_date} |",
-        f"| **Intake** | {intake_link} |",
+        f"| **Intake** | {md_url(intake_link)} |",
         f"| **Budget Requested** | {budget_ask} |",
         "",
         "## Project Description\n",
