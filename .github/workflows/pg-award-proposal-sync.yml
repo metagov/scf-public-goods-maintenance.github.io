@@ -18,31 +18,50 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Find changed project files
+      - name: Find changed files
         id: files
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CHANGED=$(gh pr diff ${{ github.event.pull_request.number }} \
+          ALL_CHANGED=$(gh pr diff ${{ github.event.pull_request.number }} \
             -R ${{ github.repository }} \
-            --name-only \
+            --name-only)
+
+          PROJECT_FILES=$(echo "$ALL_CHANGED" \
             | grep '^docs/projects/.*\.md$' \
             | grep -v '/index\.md$' \
             || true)
 
-          COUNT=$(echo "$CHANGED" | grep -c . || true)
-          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
+          OTHER_FILES=$(echo "$ALL_CHANGED" \
+            | grep -v '^docs/projects/' \
+            || true)
 
-          if [[ "$COUNT" -eq 1 ]]; then
-            echo "path=${CHANGED}" >> "$GITHUB_OUTPUT"
+          PROJECT_COUNT=$(echo "$PROJECT_FILES" | grep -c . || true)
+          OTHER_COUNT=$(echo "$OTHER_FILES" | grep -c . || true)
+
+          echo "project_count=${PROJECT_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "other_count=${OTHER_COUNT}" >> "$GITHUB_OUTPUT"
+
+          if [[ "$PROJECT_COUNT" -eq 1 ]]; then
+            echo "path=${PROJECT_FILES}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Skip if no project files changed
-        if: steps.files.outputs.count == '0'
+        if: steps.files.outputs.project_count == '0'
         run: echo "::notice::No project page changes detected — skipping sync."
 
+      - name: Fail if non-project files changed
+        if: steps.files.outputs.other_count != '0' && steps.files.outputs.project_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            -R ${{ github.repository }} \
+            --body "⚠️ This PR modifies files outside \`docs/projects/\`. Proposal PRs should only contain changes to your project page."
+          exit 1
+
       - name: Fail if multiple project files changed
-        if: steps.files.outputs.count > 1
+        if: steps.files.outputs.project_count > 1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -52,7 +71,7 @@ jobs:
           exit 1
 
       - name: Strip front matter and sync PR body
-        if: steps.files.outputs.count == '1'
+        if: steps.files.outputs.project_count == '1' && steps.files.outputs.other_count == '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
