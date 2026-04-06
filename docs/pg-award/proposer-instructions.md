@@ -37,21 +37,31 @@ Once accepted, you are eligible to submit a proposal in the next quarterly round
 
 ```mermaid
 flowchart TD
-    A["Proposer submits\nIntake Form\n(GitHub Issue)"] --> B["Automated validation\n(issue-ops parser + validator)"]
-    B -->|"valid"| C["Label: pg-intake:in-review\nBot posts: Ready for Eligibility Review"]
-    B -->|"invalid"| D["Label:\nissueops:validation-error\nBot posts error comment"]
-    D --> E["Proposer edits issue\n(triggers re-validation)"]
-    E --> B
-    C --> F["SCF members discuss\n(≥7 days)\nPilots react 👍 / 👎"]
-    F --> G["A Pilot runs\n.quorum-check command"]
-    G --> H{"Quorum met?\n(≥3 voters)"}
-    H -->|"No"| I["Bot: not enough votes yet"]
-    I --> F
-    H -->|"Yes"| J{"Accepted?\n(ups ≥ 3 + 2 × downs)"}
-    J -->|"Yes"| K["Label: pg-intake:accepted\nIssue closed & locked"]
-    J -->|"No"| L["Label: pg-intake:rejected\nIssue closed & locked"]
-    K --> M["Proposer is now eligible\nto submit a Proposal"]
-    L --> N["Only Pilots can reopen the\nintake and discussion"]
+    %% VALIDATION PHASE
+    Submit["Proposer submits\nIntake Form\n(GitHub Issue)"] --> Validate["Automated validation\n(issue-ops parser + validator)"]
+
+    Validate -->|"valid"| ReadyReview["Label: pg-intake:in-review\nBot posts: Ready for Eligibility Review"]
+
+    Validate -->|"invalid"| ValidationError["Label:\nissueops:validation-error\nBot posts error comment"]
+    ValidationError --> EditIssue["Proposer edits issue\n(triggers re-validation)"]
+    EditIssue --> Validate
+
+    %% DISCUSSION & QUORUM PHASE
+    ReadyReview --> Discussion["SCF members discuss\n(≥7 days)\nPilots react 👍 / 👎"]
+    Discussion --> RunQuorum["A Pilot runs\n.quorum-check command"]
+
+    RunQuorum --> CheckQuorum{"Quorum met?\n(≥3 voters)"}
+    CheckQuorum -->|"No"| NotEnoughVotes["Bot: not enough votes yet"]
+    NotEnoughVotes --> Discussion
+
+    %% DECISION PHASE
+    CheckQuorum -->|"Yes"| CheckApproval{"Accepted?\n(ups ≥ 3 + 2 × downs)"}
+
+    CheckApproval -->|"Yes"| IntakeAccepted["Label: pg-intake:accepted\nIssue closed & locked"]
+    CheckApproval -->|"No"| IntakeRejected["Label: pg-intake:rejected\nIssue closed & locked"]
+
+    IntakeAccepted --> EligibleStatus["Proposer is now eligible\nto submit a Proposal"]
+    IntakeRejected --> ReopenRules["Only Pilots can reopen the\nintake and discussion"]
 ```
 
 ## Proposal Process — Quarterly Timeline
@@ -71,33 +81,59 @@ submit the proposal form. Ineligible use of the form is publicly visible.
 
 ```mermaid
 flowchart TD
-    subgraph new ["New Proposal"]
-        A1["Proposer fills out\nProposal Form\n(GitHub Issue)"] --> B1["🤖 Genesis Action:\n1. validate\n2. render project page\n3. create branch + PR\n4. close issue"]
+    %% SUBGRAPH: INTAKE
+    subgraph NewProposal ["New Proposal"]
+        direction TB
+        IntakeForm["Proposer fills out\nProposal Form\n(GitHub Issue)"] --> GenesisAction["🤖 Genesis Action:\n1. validate\n2. render project page\n3. create branch + PR\n4. close issue"]
     end
-    subgraph renewal ["Update and optional Renewal Proposal"]
-        A2["Proposer edits\nexisting project page"] --> B2["Opens PR from new branch:\nproposals/{slug}-{quarter}"]
+
+    %% SUBGRAPH: RENEWAL
+    subgraph RenewalFlow ["Update and optional Renewal Proposal"]
+        direction TB
+        EditPage["Proposer edits\nexisting project page"] --> RenewalPR["Opens PR from new branch:\nproposals/{slug}-{quarter}"]
     end
-    B1 --> C["Proposal PR open\non GitHub"]
-    B2 --> C
-    C -->|"D&R phase starts"| D["Discussion & Revisions\n(~7 days)\nCommunity reviews on PR"]
-    D --> E["🤖 Sync Action:\nPR body updates on each commit"]
-    E --> D
-    D -->|"D&R phase ends"| F["Proposal finalized\n(D&R window closed)"]
-    F --> G["Proposal submitted to\nTansu for on-chain vote"]
-    G --> H["SCF Pilots vote\n(NQG-weighted, ~3 days)"]
-    H --> J{"Approved?"}
-    J -->|"Yes"| K["Handoff to SDF for\ncompliance check"]
-    J -->|"No"| L["Proposal not awarded\n(PR is not merged)"]
-    K --> M{"SDF compliance\npassed?"}
-    M -->|"Yes"| N["Tranche 1: 50% distributed\n(~1 week)"]
-    M -->|"No"| O["Project not awarded\n(at SDF discretion)"]
-    N -->|"Next quarter"| A2
-    D --> S{"Has previous\ndeliverables?"}
-    subgraph review ["Deliverables Review"]
-        S -->|"Yes"| T["Reviewers approve\n or comment"]
-        T --> U{"Supermajority\napproves?"}
-        U --> V["Tranche 2: 50% \ndistributed(~1 week)"]
+
+    %% PR ENTRY
+    GenesisAction --> ProposalPR
+    RenewalPR --> ProposalPR
+    ProposalPR["Proposal PR open\non GitHub"] --> |"D&R phase starts"| DiscRev
+
+    %% DISCUSSION & SYNC (Stacked Vertically)
+    subgraph DiscussionPhase ["Discussion & Revisions Phase"]
+        direction TB
+        DiscRev["Discussion & Revisions\n(~7 days)\nCommunity reviews on PR"]
+        SyncAction["🤖 Sync Action:\nPR body updates on each commit"]
+        DiscRev <--> SyncAction
     end
+
+    %% DELIVERABLES BRANCH (Semantic: Branches from Discussion)
+    DiscRev --> CheckDeliverables{"Has previous\ndeliverables?"}
+
+    subgraph DeliverablesReview ["Deliverables Review"]
+        direction TB
+        CheckDeliverables --> |"Yes"| RevReview["Reviewers approve\n or comment"]
+        RevReview --> Supermajority{"Supermajority\napproves?"}
+        Supermajority --> |"Yes"| Tranche2["Tranche 2: 50% \ndistributed(~1 week)"]
+    end
+
+    %% VOTING PATH (Semantic: Follows D&R End)
+    DiscRev --> |"D&R phase ends"| Finalized["Proposal finalized\n(D&R window closed)"]
+
+    Finalized --> TansuVote["Proposal submitted to\nTansu for on-chain vote"]
+    TansuVote --> PilotsVote["SCF Pilots vote\n(NQG-weighted, ~3 days)"]
+    PilotsVote --> VoteOutcome{"Approved?"}
+
+    %% FINAL OUTCOMES
+    VoteOutcome --> |"Yes"| Compliance["Handoff to SDF for\ncompliance check"]
+    VoteOutcome --> |"No"| Rejected["Proposal not awarded\n(PR is not merged)"]
+
+    Compliance --> ComplianceOutcome{"SDF compliance\npassed?"}
+
+    ComplianceOutcome --> |"Yes"| Tranche1["Tranche 1: 50% distributed\n(~1 week)"]
+    ComplianceOutcome --> |"No"| SDFRejected["Project not awarded\n(at SDF discretion)"]
+
+    %% NEXT QUARTER LOOP
+    Tranche1 --> |"Next quarter"| EditPage
 ```
 
 ## Filling Out the Proposal Form
