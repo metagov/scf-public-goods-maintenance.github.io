@@ -152,8 +152,10 @@ jobs:
 
           **Next steps:**
           1. Edit your project page directly on the PR branch during the Discussion & Revisions phase.
-          2. Use the GitHub web editor (pencil icon) or clone locally.
+          2. Use the [GitHub web editor](https://github.com/${{ github.repository }}/edit/${{ steps.branch.outputs.name }}/${{ steps.render.outputs.file_path }}?pr=/${{ github.repository }}/pull/${{ github.event.issue.number }}) or `git clone` locally, commit, and push.
           3. Every commit to the project page auto-updates the PR description.
+
+          _Please do not edit the PR description. The sync only works PR file --> PR body._
 
           See [Proposer Instructions](https://scf-public-goods-maintenance.github.io/pg-award/proposer-instructions/) for the full process."
 
