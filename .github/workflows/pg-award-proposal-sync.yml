@@ -27,9 +27,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REBASE_MSG: |
-            🤖 **Automated Housekeeping:** I detected merge commits in this branch. To keep our history linear, I have automatically rebased your changes onto `main`.
+            :robot: **Automated Housekeeping:** I detected merge commits in this branch. To keep our history linear, I have automatically rebased your changes onto `main`.
 
-            ⚠️ **Note for CLI users:** If you are working locally, please run `git pull --rebase` before your next push to sync your local history.
+            :warning: **Note for CLI users:** If you are working locally, please run `git pull --rebase` before your next push to sync your local history.
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -88,7 +88,7 @@ jobs:
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
             -R ${{ github.repository }} \
-            --body "⚠️ This PR modifies files outside \`docs/projects/\`. Proposal PRs should only contain changes to your project page."
+            --body ":warning: This PR modifies files outside \`docs/projects/\`. Proposal PRs should only contain changes to your project page."
           exit 1
 
       - name: Fail if multiple project files changed
@@ -98,7 +98,7 @@ jobs:
         run: |
           gh pr comment ${{ github.event.pull_request.number }} \
             -R ${{ github.repository }} \
-            --body "⚠️ This PR modifies multiple project pages. Please only modify one project page per PR so the proposal can be synced correctly."
+            --body ":warning: This PR modifies multiple project pages. Please only modify one project page per PR so the proposal can be synced correctly."
           exit 1
 
       - name: Strip front matter and sync PR body
@@ -118,7 +118,7 @@ jobs:
 
           if [[ "$BODY_LEN" -gt "$MAX_CHARS" ]]; then
             BODY="${BODY:0:$MAX_CHARS}"
-            BODY+=$'\n\n---\n⚠️ This proposal has been truncated due to length. View the full proposal in the [Files changed](../pull/'"$PR_NUMBER"'/files) tab.'
+            BODY+=$'\n\n---\n:warning: This preview has been truncated due to length. View the full proposal in the [Files changed](../pull/'"$PR_NUMBER"'/files) tab.'
             TRUNCATED="true"
           fi
 
