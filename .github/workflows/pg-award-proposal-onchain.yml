@@ -25,20 +25,15 @@ permissions:
   pull-requests: write
 
 jobs:
-  submit:
+  meta:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    environment: proposal-tansu
-    env:
-      FILEBASE_IPFS_API_KEY: ${{ secrets.FILEBASE_IPFS_API_KEY }}
-      STELLAR_SOURCE_SECRET: ${{ secrets.STELLAR_SOURCE_SECRET }}
-      STELLAR_NETWORK_PASSPHRASE: ${{ secrets.STELLAR_NETWORK_PASSPHRASE }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      STELLAR_NETWORK_NAME: ${{ vars.STELLAR_NETWORK_NAME || 'testnet' }}
-      STELLAR_RPC_URL: ${{ vars.STELLAR_RPC_URL }}
-      TANSU_CONTRACT_ID: ${{ vars.TANSU_CONTRACT_ID }}
-      TANSU_PROJECT_KEY: ${{ vars.TANSU_PROJECT_KEY }}
-      TANSU_PROJECT_NAME: ${{ vars.TANSU_PROJECT_NAME }}
+    outputs:
+      eligible: ${{ steps.meta.outputs.eligible }}
+      pr_number: ${{ steps.meta.outputs.pr_number }}
+      checkout_ref: ${{ steps.meta.outputs.checkout_ref }}
+      proposal_file: ${{ steps.meta.outputs.proposal_file }}
+      proposal_title: ${{ steps.meta.outputs.proposal_title }}
     steps:
       - name: Resolve proposal metadata
         id: meta
@@ -60,30 +55,25 @@ jobs:
             --json title,labels,files)"
 
           HAS_LABEL="$(jq -r 'any(.labels[]?; .name == "pg-award-proposal")' <<<"${PR_JSON}")"
+          HAS_TITLE_PREFIX="$(jq -r '.title | startswith("PG Award Proposal:")' <<<"${PR_JSON}")"
           mapfile -t PROJECT_FILES < <(
             jq -r \
               '.files[].path | select(startswith("docs/projects/") and endswith(".md") and (endswith("/index.md") | not))' \
               <<<"${PR_JSON}"
           )
-          PROJECT_COUNT="${#PROJECT_FILES[@]}"
 
           {
             echo "pr_number=${PR_NUMBER}"
             echo "checkout_ref=refs/pull/${PR_NUMBER}/head"
           } >> "${GITHUB_OUTPUT}"
 
-          if [[ "${HAS_LABEL}" != "true" && "${PROJECT_COUNT}" -ne 1 ]]; then
+          if [[ "${HAS_LABEL}" != "true" || "${HAS_TITLE_PREFIX}" != "true" ]]; then
             echo "eligible=false" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
 
-          if [[ "${PROJECT_COUNT}" -eq 0 ]]; then
+          if [[ "${#PROJECT_FILES[@]}" -eq 0 ]]; then
             echo "::error::Proposal PR #${PR_NUMBER} did not include a docs/projects/*.md file"
-            exit 1
-          fi
-
-          if [[ "${PROJECT_COUNT}" -gt 1 ]]; then
-            echo "::error::Proposal PR #${PR_NUMBER} modified multiple docs/projects/*.md files"
             exit 1
           fi
 
@@ -95,23 +85,32 @@ jobs:
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Skip non-proposal merge
-        if: steps.meta.outputs.eligible != 'true'
-        run: echo "::notice::Merged PR is not a proposal PR - skipping."
-
+  submit:
+    needs: meta
+    if: needs.meta.outputs.eligible == 'true'
+    runs-on: ubuntu-latest
+    environment: proposal-tansu
+    env:
+      FILEBASE_IPFS_API_KEY: ${{ secrets.FILEBASE_IPFS_API_KEY }}
+      STELLAR_SOURCE_SECRET: ${{ secrets.STELLAR_SOURCE_SECRET }}
+      STELLAR_NETWORK_PASSPHRASE: ${{ secrets.STELLAR_NETWORK_PASSPHRASE }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      STELLAR_NETWORK_NAME: ${{ vars.STELLAR_NETWORK_NAME || 'testnet' }}
+      STELLAR_RPC_URL: ${{ vars.STELLAR_RPC_URL }}
+      TANSU_CONTRACT_ID: ${{ vars.TANSU_CONTRACT_ID }}
+      TANSU_PROJECT_KEY: ${{ vars.TANSU_PROJECT_KEY }}
+    steps:
       - name: Checkout PR head revision
-        if: steps.meta.outputs.eligible == 'true'
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.meta.outputs.checkout_ref }}
+          ref: ${{ needs.meta.outputs.checkout_ref }}
 
       - name: Upload proposal markdown to Filebase
-        if: steps.meta.outputs.eligible == 'true'
         id: proposal
         env:
-          PROPOSAL_FILE: ${{ steps.meta.outputs.proposal_file }}
-          PROPOSAL_TITLE: ${{ steps.meta.outputs.proposal_title }}
-          PR_NUMBER: ${{ steps.meta.outputs.pr_number }}
+          PROPOSAL_FILE: ${{ needs.meta.outputs.proposal_file }}
+          PROPOSAL_TITLE: ${{ needs.meta.outputs.proposal_title }}
+          PR_NUMBER: ${{ needs.meta.outputs.pr_number }}
         run: |
           set -euo pipefail
 
@@ -166,11 +165,9 @@ jobs:
           } >> "${GITHUB_OUTPUT}"
 
       - name: Install Stellar CLI
-        if: steps.meta.outputs.eligible == 'true'
         uses: stellar/stellar-cli@v25.2.0
 
       - name: Configure Stellar CLI
-        if: steps.meta.outputs.eligible == 'true'
         run: |
           echo "XDG_CONFIG_HOME=${RUNNER_TEMP}/xdg-config" >> "${GITHUB_ENV}"
           export XDG_CONFIG_HOME="${RUNNER_TEMP}/xdg-config"
@@ -182,7 +179,6 @@ jobs:
           printf '%s\n' "${STELLAR_SOURCE_SECRET}" | stellar keys add ci-submitter
 
       - name: Submit proposal to Tansu
-        if: steps.meta.outputs.eligible == 'true'
         id: invoke
         env:
           PROJECT_KEY: ${{ inputs.project_key || vars.TANSU_PROJECT_KEY }}
@@ -215,10 +211,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Report outcomes
-        if: steps.meta.outputs.eligible == 'true'
         env:
-          PR_NUMBER: ${{ steps.meta.outputs.pr_number }}
-          PROPOSAL_FILE: ${{ steps.meta.outputs.proposal_file }}
+          PR_NUMBER: ${{ needs.meta.outputs.pr_number }}
+          PROPOSAL_FILE: ${{ needs.meta.outputs.proposal_file }}
           PROPOSAL_ID: ${{ steps.invoke.outputs.proposal_id }}
           PROPOSAL_TITLE: ${{ steps.proposal.outputs.normalized_title }}
           PROPOSAL_CID: ${{ steps.proposal.outputs.cid }}
@@ -228,10 +223,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          TANSU_DOMAIN="app.tansu.dev"
-          if [[ "${STELLAR_NETWORK_NAME}" == "testnet" ]]; then
-            TANSU_DOMAIN="testnet.tansu.dev"
-          fi
+          TANSU_DOMAIN="$(
+            [[ "${STELLAR_NETWORK_NAME}" == "testnet" ]] && echo "testnet.tansu.dev" || echo "app.tansu.dev"
+          )"
 
           TANSU_LINK="https://${TANSU_DOMAIN}/proposal/?id=${PROPOSAL_ID}&name=${PROJECT_NAME}"
 
