@@ -16,7 +16,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   submit:
@@ -32,6 +32,7 @@ jobs:
       STELLAR_RPC_URL: ${{ vars.STELLAR_RPC_URL }}
       TANSU_CONTRACT_ID: ${{ vars.TANSU_CONTRACT_ID }}
       TANSU_PROJECT_KEY: ${{ vars.TANSU_PROJECT_KEY }}
+      TANSU_PROJECT_NAME: ${{ vars.TANSU_PROJECT_NAME }}
     steps:
       - name: Resolve proposal metadata
         id: meta
@@ -121,6 +122,26 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --json body | jq -r '.body' > "${DISCUSSION_FILE}"
 
+          DISCUSSION_FILE="${RUNNER_TEMP}/discussion.md"
+          gh pr view "${PR_NUMBER}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json title,body,author,createdAt,comments \
+            --jq '"# \(.title)\n\n**\(.author.login)** (\(.createdAt)):\n\n\(.body)\n\n---\n\n" + (.comments | map("**\(.author.login)** (\(.createdAt)):\n\n\(.body)\n\n---\n\n") | join(""))' \
+            > "${DISCUSSION_FILE}"
+
+          DISCUSSION_RESPONSE="$(
+            curl --silent --show-error --fail \
+              -X POST \
+              -H "Authorization: Bearer ${FILEBASE_IPFS_API_KEY}" \
+              "https://rpc.filebase.io/api/v0/add" \
+              -F "file=@${DISCUSSION_FILE};filename=discussion.md;type=text/markdown"
+          )"
+
+          DISCUSSION_CID="$(printf '%s\n' "${DISCUSSION_RESPONSE}" | jq -r '.Hash // .Cid // empty')"
+
+          # Inject discussion CID into proposal frontmatter
+          sed -i "s/^proposal_issue:.*$/&\nproposal_cid: ${DISCUSSION_CID}/" "${PROPOSAL_FILE}"
+
           FILEBASE_RESPONSE="$(
             curl --silent --show-error --fail \
               -X POST \
@@ -148,6 +169,7 @@ jobs:
             echo "${NORMALIZED_TITLE}"
             echo "EOF"
             echo "cid=${CID}"
+            echo "discussion_cid=${DISCUSSION_CID}"
             echo "voting_ends_at=${VOTING_ENDS_AT}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -191,32 +213,68 @@ jobs:
             --voting_ends_at "${VOTING_ENDS_AT}" \
             --public_voting false)"
 
+          PROPOSAL_ID="$(echo "${RESULT}" | sed 's/^"//;s/"$//')"
+
           {
             echo "result<<EOF"
             echo "${RESULT}"
             echo "EOF"
+            echo "proposal_id=${PROPOSAL_ID}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Write step summary
+      - name: Report outcomes
         if: steps.meta.outputs.eligible == 'true'
+        env:
+          PR_NUMBER: ${{ steps.meta.outputs.pr_number }}
+          PROPOSAL_FILE: ${{ steps.meta.outputs.proposal_file }}
+          PROPOSAL_ID: ${{ steps.invoke.outputs.proposal_id }}
+          PROPOSAL_TITLE: ${{ steps.proposal.outputs.normalized_title }}
+          PROPOSAL_CID: ${{ steps.proposal.outputs.cid }}
+          DISCUSSION_CID: ${{ steps.proposal.outputs.discussion_cid }}
+          VOTING_ENDS_AT: ${{ steps.proposal.outputs.voting_ends_at }}
+          PROJECT_KEY: ${{ inputs.project_key || vars.TANSU_PROJECT_KEY }}
+          PROJECT_NAME: ${{ vars.TANSU_PROJECT_NAME }}
+          INVOKE_RESULT: ${{ steps.invoke.outputs.result }}
         run: |
-          cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
-          ## Proposal Submission
+          set -euo pipefail
+
+          TANSU_DOMAIN="tansu.dev"
+          if [[ "${STELLAR_NETWORK_NAME}" == "testnet" ]]; then
+            TANSU_DOMAIN="testnet.tansu.dev"
+          fi
+
+          TANSU_LINK="https://${TANSU_DOMAIN}/proposal/?id=${PROPOSAL_ID}&name=${PROJECT_NAME}"
+
+          REPORT_MD="${RUNNER_TEMP}/report.md"
+          cat > "${REPORT_MD}" <<EOF
+          ## Proposal Successfully Submitted to Tansu 🚀
+
+          The proposal has been uploaded to IPFS and submitted on-chain.
 
           | | |
           | --- | --- |
-          | **PR** | #${{ steps.meta.outputs.pr_number }} |
-          | **Proposal file** | \`${{ steps.meta.outputs.proposal_file }}\` |
-          | **Proposal title** | ${{ steps.proposal.outputs.normalized_title }} |
-          | **IPFS CID** | \`${{ steps.proposal.outputs.cid }}\` |
-          | **Voting ends at** | \`${{ steps.proposal.outputs.voting_ends_at }}\` |
-          | **Network** | \`${{ env.STELLAR_NETWORK_NAME }}\` |
-          | **Contract** | \`${{ env.TANSU_CONTRACT_ID }}\` |
-          | **Project key** | \`${{ inputs.project_key || vars.TANSU_PROJECT_KEY }}\` |
+          | **Tansu Link** | [View on Tansu](${TANSU_LINK}) |
+          | **PR** | #${PR_NUMBER} |
+          | **Proposal File** | \`${PROPOSAL_FILE}\` |
+          | **Proposal ID** | \`${PROPOSAL_ID}\` |
+          | **Proposal Title** | ${PROPOSAL_TITLE} |
+          | **Proposal CID** | \`${PROPOSAL_CID}\` |
+          | **Discussion CID** | \`${DISCUSSION_CID}\` |
+          | **Voting Ends At** | \`${VOTING_ENDS_AT}\` |
+          | **Network** | \`${STELLAR_NETWORK_NAME}\` |
+          | **Contract** | \`${TANSU_CONTRACT_ID}\` |
+          | **Project Key** | \`${PROJECT_KEY}\` |
+          EOF
+
+          gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body-file "${REPORT_MD}"
+
+          cat "${REPORT_MD}" >> "${GITHUB_STEP_SUMMARY}"
+
+          cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
 
           **Invoke result**
 
           \`\`\`text
-          ${{ steps.invoke.outputs.result }}
+          ${INVOKE_RESULT}
           \`\`\`
           EOF
