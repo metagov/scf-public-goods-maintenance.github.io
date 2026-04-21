@@ -122,16 +122,16 @@ jobs:
             > "${OUTCOMES_FILE}"
 
           DISCUSSION_FILE="${RUNNER_TEMP}/proposal_discussion.md"
-          gh pr view "${PR_NUMBER}" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --json body | jq -r '.body' > "${DISCUSSION_FILE}"
-
-          DISCUSSION_FILE="${RUNNER_TEMP}/discussion.md"
-          gh pr view "${PR_NUMBER}" \
-            --repo "${GITHUB_REPOSITORY}" \
-            --json title,body,author,createdAt,comments \
-            --jq '"# \(.title)\n\n**\(.author.login)** (\(.createdAt)):\n\n\(.body)\n\n---\n\n" + (.comments | map("**\(.author.login)** (\(.createdAt)):\n\n\(.body)\n\n---\n\n") | join(""))' \
-            > "${DISCUSSION_FILE}"
+          {
+            printf '# Discussion for PR #%s\n\nhttps://github.com/%s/pull/%s\n\n---\n\n' \
+              "${PR_NUMBER}" "${GITHUB_REPOSITORY}" "${PR_NUMBER}"
+            gh pr view "${PR_NUMBER}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --json comments | \
+              jq -r '(.comments | map(select((.author.login | endswith("[bot]") | not) and (.author.login != "github-actions")))) as $human_comments | if ($human_comments | length)==0 then "_No top-level PR comments._\n" else ($human_comments[] | "## @\(.author.login) (\(.createdAt))\n\n\(.body // "")\n\n---\n") end'
+            gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/comments" --paginate | \
+              jq -r '(map(select((.user.login | endswith("[bot]") | not) and (.user.login != "github-actions")))) as $human_reviews | if ($human_reviews | length)==0 then "_No review comments._\n" else ($human_reviews[] | "## @\(.user.login) on `\(.path)` (\(.created_at))\n\n\(.body // "")\n\n---\n") end'
+          } > "${DISCUSSION_FILE}"
 
           DISCUSSION_RESPONSE="$(
             curl --silent --show-error --fail \
