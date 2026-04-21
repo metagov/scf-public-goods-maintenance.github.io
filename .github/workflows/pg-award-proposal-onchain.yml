@@ -104,6 +104,7 @@ jobs:
         env:
           PROPOSAL_FILE: ${{ steps.meta.outputs.proposal_file }}
           PROPOSAL_TITLE: ${{ steps.meta.outputs.proposal_title }}
+          PR_NUMBER: ${{ steps.meta.outputs.pr_number }}
         run: |
           set -euo pipefail
 
@@ -111,9 +112,14 @@ jobs:
           NORMALIZED_TITLE="$(printf '%s' "${NORMALIZED_TITLE}" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
 
           OUTCOMES_FILE="${RUNNER_TEMP}/outcomes.json"
-          cat > "${OUTCOMES_FILE}" <<'EOF'
-          {"approved":{"description":"Fund the proposal"},"rejected":{"description":"Do not fund the proposal"},"cancelled":{"description":"Undecided outcome"}}
-          EOF
+          printf '%s\n' \
+            '{"approved":{"description":"Fund the proposal"},"rejected":{"description":"Do not fund the proposal"},"cancelled":{"description":"Undecided outcome"}}' \
+            > "${OUTCOMES_FILE}"
+
+          DISCUSSION_FILE="${RUNNER_TEMP}/proposal_discussion.md"
+          gh pr view "${PR_NUMBER}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --json body | jq -r '.body' > "${DISCUSSION_FILE}"
 
           FILEBASE_RESPONSE="$(
             curl --silent --show-error --fail \
@@ -121,7 +127,8 @@ jobs:
               -H "Authorization: Bearer ${FILEBASE_IPFS_API_KEY}" \
               "https://rpc.filebase.io/api/v0/add?wrap-with-directory=true" \
               -F "file=@${PROPOSAL_FILE};filename=proposal.md;type=text/markdown" \
-              -F "file=@${OUTCOMES_FILE};filename=outcomes.json;type=application/json"
+              -F "file=@${OUTCOMES_FILE};filename=outcomes.json;type=application/json" \
+              -F "file=@${DISCUSSION_FILE};filename=proposal_discussion.md;type=text/markdown"
           )"
 
           CID="$(printf '%s\n' "${FILEBASE_RESPONSE}" | jq -r '.Hash // .Cid // empty' | tail -n 1)"
@@ -130,6 +137,9 @@ jobs:
             --output /dev/null
           curl --silent --show-error --fail --location \
             "https://ipfs.filebase.io/ipfs/${CID}/outcomes.json" \
+            --output /dev/null
+          curl --silent --show-error --fail --location \
+            "https://ipfs.filebase.io/ipfs/${CID}/proposal_discussion.md" \
             --output /dev/null
           VOTING_ENDS_AT="$(( $(date +%s) + 7 * 24 * 3600 ))"
 
