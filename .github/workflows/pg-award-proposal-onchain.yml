@@ -13,6 +13,10 @@ on:
         description: Optional Tansu project key override (hex-encoded bytes)
         required: false
         type: string
+      project_name:
+        description: Optional Tansu project name override
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -233,8 +237,7 @@ jobs:
           DISCUSSION_CID: ${{ steps.proposal.outputs.discussion_cid }}
           VOTING_ENDS_AT: ${{ steps.proposal.outputs.voting_ends_at }}
           PROJECT_KEY: ${{ inputs.project_key || vars.TANSU_PROJECT_KEY }}
-          PROJECT_NAME: ${{ vars.TANSU_PROJECT_NAME }}
-          INVOKE_RESULT: ${{ steps.invoke.outputs.result }}
+          PROJECT_NAME: ${{ inputs.project_name || vars.TANSU_PROJECT_NAME }}
         run: |
           set -euo pipefail
 
@@ -269,12 +272,3 @@ jobs:
           gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body-file "${REPORT_MD}"
 
           cat "${REPORT_MD}" >> "${GITHUB_STEP_SUMMARY}"
-
-          cat >> "${GITHUB_STEP_SUMMARY}" <<EOF
-
-          **Invoke result**
-
-          \`\`\`text
-          ${INVOKE_RESULT}
-          \`\`\`
-          EOF
