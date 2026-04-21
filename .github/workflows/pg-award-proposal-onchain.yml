@@ -135,19 +135,6 @@ jobs:
               jq -r '(map(select((.user.login | endswith("[bot]") | not) and (.user.login != "github-actions")))) as $human_reviews | if ($human_reviews | length)==0 then "_No review comments._\n" else ($human_reviews[] | "## @\(.user.login) on `\(.path)` (\(.created_at))\n\n\(.body // "")\n\n---\n") end'
           } > "${DISCUSSION_FILE}"
 
-          DISCUSSION_RESPONSE="$(
-            curl --silent --show-error --fail \
-              -X POST \
-              -H "Authorization: Bearer ${FILEBASE_IPFS_API_KEY}" \
-              "https://rpc.filebase.io/api/v0/add" \
-              -F "file=@${DISCUSSION_FILE};filename=discussion.md;type=text/markdown"
-          )"
-
-          DISCUSSION_CID="$(printf '%s\n' "${DISCUSSION_RESPONSE}" | jq -r '.Hash // .Cid // empty')"
-
-          # Inject discussion CID into proposal frontmatter
-          sed -i "s/^proposal_issue:.*$/&\nproposal_cid: ${DISCUSSION_CID}/" "${PROPOSAL_FILE}"
-
           FILEBASE_RESPONSE="$(
             curl --silent --show-error --fail \
               -X POST \
@@ -175,7 +162,6 @@ jobs:
             echo "${NORMALIZED_TITLE}"
             echo "EOF"
             echo "cid=${CID}"
-            echo "discussion_cid=${DISCUSSION_CID}"
             echo "voting_ends_at=${VOTING_ENDS_AT}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -236,7 +222,6 @@ jobs:
           PROPOSAL_ID: ${{ steps.invoke.outputs.proposal_id }}
           PROPOSAL_TITLE: ${{ steps.proposal.outputs.normalized_title }}
           PROPOSAL_CID: ${{ steps.proposal.outputs.cid }}
-          DISCUSSION_CID: ${{ steps.proposal.outputs.discussion_cid }}
           VOTING_ENDS_AT: ${{ steps.proposal.outputs.voting_ends_at }}
           PROJECT_KEY: ${{ inputs.project_key || vars.TANSU_PROJECT_KEY }}
           PROJECT_NAME: ${{ inputs.project_name || vars.TANSU_PROJECT_NAME }}
@@ -264,7 +249,6 @@ jobs:
           | **Proposal ID** | \`${PROPOSAL_ID}\` |
           | **Proposal Title** | ${PROPOSAL_TITLE} |
           | **Proposal CID** | \`${PROPOSAL_CID}\` |
-          | **Discussion CID** | \`${DISCUSSION_CID}\` |
           | **Voting Ends At** | \`${VOTING_ENDS_AT}\` |
           | **Network** | \`${STELLAR_NETWORK_NAME}\` |
           | **Contract** | \`${TANSU_CONTRACT_ID}\` |
