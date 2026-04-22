@@ -101,26 +101,26 @@ stablecoin explorer, and content layer.
 
 <!-- markdownlint-disable MD034 -->
 
-#### Intake mechanism
+### Intake mechanism
 
 direct integration with sdf's entity airtable for one-directional data sync (projects + grants). live
 and operational. public intake form for new project submissions, reviewed against eligibility before
 publishing. live at stellarlight.xyz/submit.
 
-#### Public launch modules
+### Public launch modules
 
 highlight modules for trending and high-impact projects: "top builders," "emerging apps," "community
 picks," and "trending projects." all live on stellarlight.xyz homepage. monthly ecosystem digest
 auto-generated from directory data. published via stellarlight.xyz/blog.
 
-#### Ranking and discovery
+### Ranking and discovery
 
 protocol and contract exploration: surfacing on-chain data including number of invocations and usage
 metrics for soroban contracts. discovery modifiers: scf and sdf affiliation filters. recency and
 frequency-of-update signals integrated into project ranking. github activity leaderboard ranking
 ecosystem projects by stars, issues, and commit recency. live at stellarlight.xyz/leaderboard.
 
-#### Stablecoin explorer
+### Stablecoin explorer
 
 22+ verified stablecoins tracked with historical dashboards (14d, 90d, 1y), issuer leaderboard, and
 top issuer breakdowns (circle, paypal/paxos, gmo trust, fxdao, novatti group). live at
@@ -128,19 +128,19 @@ stellarlight.xyz. defi visibility layer: amm liquidity, tvl, and blend capital i
 alongside stablecoin data. curated developer tools directory for payments and stablecoin builders.
 additional data updates integrated via goldsky.
 
-#### Hackathon tracker
+### Hackathon tracker
 
 hackathon event calendar surfacing upcoming stellar hackathons. post-hackathon project status
 tracking (built, in progress, abandoned).
 
-#### Project directory and profiles
+### Project directory and profiles
 
 745+ stellar projects and entities indexed with linked project and company profiles, fully
 categorized. github stats and blog rss feeds integrated into individual project pages. tvl charts
 embedded on individual project pages. public transparency and change logs for project data.
 mobile-first ui redesign with advanced filters, infinite scroll, and responsive layout.
 
-#### Builder onboarding and rfps
+### Builder onboarding and rfps
 
 curated project ideas across defi, payments, infrastructure, dev tools, and gaming. live at
 ideas.stellarlight.xyz. dedicated rfp section populated with this quarter's active scf rfps. live at
@@ -149,22 +149,22 @@ through ethdenver and built the intake form for q1 rfp sections. difficulty rati
 filters, and moderation/approval workflow. event and hackathon promotion hooks to connect ideas with
 active programs.
 
-#### Passport integration
+### Passport integration
 
 stellarlight integrated into passport (passport.stellarcoop.com) as a builders directory, with
 builder profiles connected through stellar passport for ecosystem events and community coordination.
 
-#### AI-powered data cleaning
+### AI-powered data cleaning
 
 built an ai algorithm to normalize, verify, and fix project data across the directory. identifies
 duplicates, corrects categorization, flags stale or broken links, and ensures project profiles are
 accurate and consistent at scale.
 
-#### Ecosystem visualizations
+### Ecosystem visualizations
 
 tvl charts on project pages. defi tvl (defillama) and rwa tvl (rwa.xyz) on homepage.
 
-#### Content and ecosystem reporting
+### Content and ecosystem reporting
 
 12+ original blog posts published at stellarlight.xyz/blog covering protocol 24 upgrade guide,
 privacy on open blockchains, pos risk analysis, more.
