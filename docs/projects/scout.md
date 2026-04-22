@@ -201,7 +201,7 @@ Month 3 – AI Agent POC Iteration 2
 
 ## Reviewers comments
 
-```
+```text
 @AshFrancis says:
 
 ~31 detectors (with 3 more in this proposal) is pretty good coverage for generic issues.
@@ -220,7 +220,7 @@ It would be good to see some kind of positive feedback loop with projects utiliz
 [CF] We are working with SCF to raise awareness around security and provide hands-on support to projects.
 ```
 
-```
+```text
 @oceans404 says:
 I like the direction. One distribution thought: Scaffold Stellar has already shipped both their extension system and a reporter extension — framed by Aha as "a distribution surface for other public goods and ecosystem tooling." Scout feels like a natural fit there: a detector extension running during stellar scaffold build, with findings surfaced through the reporter.
 

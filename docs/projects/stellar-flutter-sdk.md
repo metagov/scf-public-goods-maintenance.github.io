@@ -76,7 +76,7 @@ https://soneso.github.io/soneso-sdk-stats/).
 
 ## Past Deliverables
 
-### 1. Continuous Maintenance and Improvement
+### 1. Continuous Maintenance and Improvement Deliverable
 
 Description from last quarter: Regular SDK updates addressing horizon, rpc, protocol updates (e.g.
 p25), bug fixes, feature requests (e.g. full web support), code modernization, unit test coverage
@@ -240,7 +240,7 @@ Implement support for the OpenZeppelin smart account contracts on Soroban, cover
 
 Proof: Release on GitHub, PR with implementation, demo app, documentation, test suite.
 
-### Budget justification:
+### Budget justification
 
 The budget increase from $15,000 to $18,000 reflects the addition of OpenZeppelin Smart Account
 support, which is a major new feature involving cross-platform WebAuthn integration (iOS, Android,

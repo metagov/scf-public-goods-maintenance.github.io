@@ -75,7 +75,7 @@ https://soneso.github.io/soneso-sdk-stats/).
 
 ## Past Deliverables
 
-### 1. Continuous Maintenance and Improvement
+### 1. Continuous Maintenance and Improvement Deliverable
 
 Description from last quarter: Regular SDK updates addressing horizon, rpc, protocol updates (e.g.
 p25), bug fixes, feature requests, code modernization, unit test coverage improvement, and
