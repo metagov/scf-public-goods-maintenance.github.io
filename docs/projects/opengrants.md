@@ -113,11 +113,9 @@ For the next three months, OpenGrants will remain the reliable, up-to-date sourc
    - _Ecosystem value: consistent, data-driven context for delegates and the community during the decision-making and voting process of every SCF round._
 
 2. **Data integration automation.** Polish and harden the ingestion pipeline toward fully automated data ingestion, reducing manual steps (per PG Atlas team feedback). 
-
     - *Ecosystem value: more reliable, always-current Stellar funding data with less operational overhead. Setting this base infra enables us to build towards more intelligent data points.*
 
 3. **MCP server for OpenGrants.** Ship an MCP server exposing the OpenGrants dataset so agents and downstream tools can query funding data directly. 
-
     - *Ecosystem value: makes OpenGrants data programmatically consumable by agents, researchers, and dependent projects.*
 
 4. **More legible data with greater signal**  
