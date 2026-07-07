@@ -123,7 +123,7 @@ For the next three months, OpenGrants will remain the reliable, up-to-date sourc
 4. **More legible data with greater signal**  
 
     4.a. **Stellar project view.** A dedicated, improved view surfacing SCF funded project's funding data for easier navigation. 
-For example: View OpenGrants and its funding history by SCF.
+    For example: View OpenGrants and its funding history by SCF.
     - _Ecosystem value: clearer, SCF-specific legibility for community members and reviewers._
 
     4.b. **About page for OpenGrants.** An About page documenting what OpenGrants is, its data sources, and how to use the infrastructure.
